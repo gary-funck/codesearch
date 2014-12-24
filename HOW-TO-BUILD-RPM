@@ -1,0 +1,43 @@
+How to build RPM specfile for codesearch
+(Ref: http://code.google.com/p/codesearch/)
+
+NOTE: The codesearch.spec file conforms to these
+draft packaging guidelines for 'golang' based applications:
+
+  http://fedoraproject.org/wiki/PackagingDrafts/Go
+
+To create the codesearch rpm's, do the following:
+
+1. If necessary, change the hg commit id given by
+   this line in codesearch.spec:
+
+   %global rev     24df7a1a1bd03971c9dbc5408723b32527d62b94
+
+   If you change that value, you will likely also
+   want to change the 'snapshot' date stamp.
+
+   %global snapshot        20131031
+
+2. If necessary, change the version number given in lib/version.
+   It has the form '#.##', where '#' is a decimal digit.
+
+3. cd into the 'lib' directory and run 'build-rpm'.
+   
+   cd lib; ./build-rpm
+
+The rpm spec file will be written to ~/rpmbuild/SPECS/codesearch.spec.
+
+The source rpm can be found under ~/rpmbuild/SRPMS.
+
+The binary rpm for the codesearch tools can be found under
+~/rpmbuild/RPMS/<arch>, where <arch> is the computer architecture
+(for example, ~/rpmbuild/RPMS/x86_64).
+
+The library rpm for the codesearch tool library routines
+can be found under ~/rpmbuild/RPMS/noarch
+
+The rpm's will have names of the following form.
+
+  codesearch-0.02.20131031-02.fc20.src.rpm
+  codesearch-0.02.20131031-02.fc20.x86_64.rpm
+  golang-googlecode-codesearch-devel-0-02.hg24df7a1a1bd0.fc20.noarch.rpm

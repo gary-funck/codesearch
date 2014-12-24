@@ -1,0 +1,4 @@
+#!/bin/bash
+git diff hg -- HOW-TO-BUILD-RPM codesearch.spec \
+  lib/build-rpm lib/version \
+  > patches/codesearch-rpm-spec.patch

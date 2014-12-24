@@ -1,0 +1,231 @@
+diff --git a/HOW-TO-BUILD-RPM b/HOW-TO-BUILD-RPM
+new file mode 100644
+index 0000000..59b613b
+--- /dev/null
++++ b/HOW-TO-BUILD-RPM
+@@ -0,0 +1,43 @@
++How to build RPM specfile for codesearch
++(Ref: http://code.google.com/p/codesearch/)
++
++NOTE: The codesearch.spec file conforms to these
++draft packaging guidelines for 'golang' based applications:
++
++  http://fedoraproject.org/wiki/PackagingDrafts/Go
++
++To create the codesearch rpm's, do the following:
++
++1. If necessary, change the hg commit id given by
++   this line in codesearch.spec:
++
++   %global rev     24df7a1a1bd03971c9dbc5408723b32527d62b94
++
++   If you change that value, you will likely also
++   want to change the 'snapshot' date stamp.
++
++   %global snapshot        20131031
++
++2. If necessary, change the version number given in lib/version.
++   It has the form '#.##', where '#' is a decimal digit.
++
++3. cd into the 'lib' directory and run 'build-rpm'.
++   
++   cd lib; ./build-rpm
++
++The rpm spec file will be written to ~/rpmbuild/SPECS/codesearch.spec.
++
++The source rpm can be found under ~/rpmbuild/SRPMS.
++
++The binary rpm for the codesearch tools can be found under
++~/rpmbuild/RPMS/<arch>, where <arch> is the computer architecture
++(for example, ~/rpmbuild/RPMS/x86_64).
++
++The library rpm for the codesearch tool library routines
++can be found under ~/rpmbuild/RPMS/noarch
++
++The rpm's will have names of the following form.
++
++  codesearch-0.02.20131031-02.fc20.src.rpm
++  codesearch-0.02.20131031-02.fc20.x86_64.rpm
++  golang-googlecode-codesearch-devel-0-02.hg24df7a1a1bd0.fc20.noarch.rpm
+diff --git a/codesearch.spec b/codesearch.spec
+new file mode 100644
+index 0000000..f905492
+--- /dev/null
++++ b/codesearch.spec
+@@ -0,0 +1,116 @@
++%global go_import_path	code.google.com/p/codesearch
++%global go_source	_build/src/%{go_import_path}
++%global rev	24df7a1a1bd03971c9dbc5408723b32527d62b94
++%global shortrev	%(r=%{rev}; echo ${r:0:12})
++%global snapshot	20131031
++%global package_major	@version_major@
++%global package_minor	@version_minor@
++%global package_version	%{package_major}.%{package_minor}
++# We are using gccgo: stripped binaries are not presently supported.
++%global __strip	/bin/true
++# For now, the debuginfo macro fails due to no build ID note on golang
++# binaries, so disable the debug package.
++%global debug_package	%{nil}
++
++Name:	codesearch
++Version:	%{package_major}.%{snapshot}
++Release:	%{package_minor}%{?dist}
++Summary:	The Google codesearch tool and its libraries.
++Group:		Applications/File
++License:	BSD
++URL:		http://code.google.com/p/codesearch
++Source0:	https://codesearch.googlecode.com/archive/%{rev}.tar.gz
++Patch0:	codesearch-rpm-spec.patch
++BuildRequires:	gcc
++BuildRequires:	golang >= 1.2-7
++ExclusiveArch:	%{go_arches}
++
++%description
++Google code search
++
++%package	-n golang-googlecode-codesearch-devel
++Version:	%{package_major}
++Release:	%{package_minor}.hg%{shortrev}%{?dist}
++Summary:	Go libraries which support the Google codesearch tool
++Group:	System Environment/Libraries
++Provides:	golang(%{go_import_path}) = %{version}-%{release}
++Provides:	golang(%{go_import_path}/index) = %{version}-%{release}
++Provides:	golang(%{go_import_path}/regexp) = %{version}-%{release}
++Provides:	golang(%{go_import_path}/sparse) = %{version}-%{release}
++Requires:	golang
++%if 0%{?fedora} >= 19
++BuildArch:	noarch
++%else
++ExclusiveArch:	%{go_arches}
++%endif
++%description -n golang-googlecode-codesearch-devel
++%{summary}
++
++These libraries implement the tokenization of input files
++into trigraphs, building a cross-reference index of trigraphs
++and a regular expression matcher that employs the trigraph index.
++
++%prep
++%setup -q -n codesearch-%{shortrev}
++
++%patch0 -p1
++
++%build
++# Set up temporary build gopath, and put our directory there.
++mkdir -p $(dirname %{go_source})
++ln -s $(pwd) %{go_source}
++export GOPATH=$(pwd)/_build:%{gopath}
++for tool in cgrep cindex csearch; do
++  go build -o $tool cmd/$tool/${tool}.go
++done
++
++%install
++install -d %{buildroot}/%{_bindir}
++for tool in cgrep cindex csearch; do
++  install -p -m755 ./${tool} %{buildroot}/%{_bindir}
++done
++install -d %{buildroot}/%{gopath}/src/%{go_import_path}
++for d in index regexp sparse; do
++   cp -avp $d %{buildroot}/%{gopath}/src/%{go_import_path}/
++done
++
++%clean
++rm -rf %{buildroot}
++
++%files
++%defattr(-,root,root,-)
++%{_bindir}/cgrep
++%{_bindir}/cindex
++%{_bindir}/csearch
++
++%files -n golang-googlecode-codesearch-devel
++%defattr(-,root,root,-)
++%doc AUTHORS CONTRIBUTORS LICENSE README
++%dir %attr(755,root,root) %{gopath}/src/%{go_import_path}
++%dir %attr(755,root,root) %{gopath}/src/%{go_import_path}/index
++%dir %attr(755,root,root) %{gopath}/src/%{go_import_path}/regexp
++%dir %attr(755,root,root) %{gopath}/src/%{go_import_path}/sparse
++%{gopath}/src/%{go_import_path}/index/*.go
++%{gopath}/src/%{go_import_path}/regexp/*.go
++%{gopath}/src/%{go_import_path}/sparse/*.go
++
++%changelog
++* Wed Dec 24 2014 Gary Funck <gary@intrepid.com>
++- Add package building infrastructure.
++- Bump the package version.
++
++* Tue Dec 23 2014 Gary Funck <gary@intrepid.com>
++- Update spec file to conform to conventions described here:
++  http://fedoraproject.org/wiki/PackagingDrafts/Go
++
++* Tue Dec 23 2014 Gary Funck <gary@intrepid.com>
++- Update to hg checkout dated 2013-10-31.
++
++* Sun Sep 02 2012 Dennis Kaarsemaker <dennis.kaarsemaker@booking.com> 0.20120502
++- Update to a newer hg checkout
++
++* Thu Mar 8 2012 Dennis Kaarsemaker <dennis.kaarsemaker@booking.com> 201202222-r21
++- Add more patches from Damian
++
++* Sun Feb 26 2012 Dennis Kaarsemaker <dennis.kaarsemaker@booking.com> 201202222-1
++- Initial version, after much swearing at go
+diff --git a/lib/build-rpm b/lib/build-rpm
+new file mode 100755
+index 0000000..e696c1c
+--- /dev/null
++++ b/lib/build-rpm
+@@ -0,0 +1,47 @@
++#!/bin/bash -e
++
++pgm="$0"
++
++diag()
++{
++  echo "$*" >&2
++}
++
++error()
++{
++  diag "$*"
++  exit 1
++}
++
++[ $(basename $PWD) = 'lib' ] \
++  || error "This script must be executed from the 'lib' directory."
++[ -e ../codesearch.spec ] \
++  || error "can't find ../codesearch.spec"
++. ./setup
++if ! rpm -q rpmdevtools >/dev/null 2>&1; then
++  sudo yum install rpmdevtools
++fi
++if ! rpm -q rpmlint >/dev/null 2>&1; then
++  sudo yum install rpmlint
++fi
++rpmdev-setuptree
++specdir=`rpm --eval '%{_specdir}'`
++[ -d "$specdir" ] \
++  || error "can't find '%{_specdir}'"
++sourcedir=`rpm --eval '%{_sourcedir}'`
++[ -d "$sourcedir" ] \
++  || error "can't find '%{_sourcedir}'"
++specfile=${specdir}/codesearch.spec
++version_major=`echo "$version" | sed -e 's/\..*//'`
++version_minor=`echo "$version" | sed -e 's/.*\.//'`
++sed -e "s/@version_major@/${version_major}/g; \
++        s/@version_minor@/${version_minor}/g" \
++  ../codesearch.spec > ${specfile} \
++  || error "can't write '${specfile}'"
++rpmlint $specfile \
++  || error "rpmlint errors found."
++spectool -R --get-files ${specfile}
++for patch in ../patches/*.patch; do
++  cp -pv $patch ${sourcedir}/
++done
++rpmbuild -ba ${specdir}/codesearch.spec
+diff --git a/lib/version b/lib/version
+index 6e6566c..7dec35f 100644
+--- a/lib/version
++++ b/lib/version
+@@ -1 +1 @@
+-0.01
++0.02

@@ -1,0 +1,47 @@
+#!/bin/bash -e
+
+pgm="$0"
+
+diag()
+{
+  echo "$*" >&2
+}
+
+error()
+{
+  diag "$*"
+  exit 1
+}
+
+[ $(basename $PWD) = 'lib' ] \
+  || error "This script must be executed from the 'lib' directory."
+[ -e ../codesearch.spec ] \
+  || error "can't find ../codesearch.spec"
+. ./setup
+if ! rpm -q rpmdevtools >/dev/null 2>&1; then
+  sudo yum install rpmdevtools
+fi
+if ! rpm -q rpmlint >/dev/null 2>&1; then
+  sudo yum install rpmlint
+fi
+rpmdev-setuptree
+specdir=`rpm --eval '%{_specdir}'`
+[ -d "$specdir" ] \
+  || error "can't find '%{_specdir}'"
+sourcedir=`rpm --eval '%{_sourcedir}'`
+[ -d "$sourcedir" ] \
+  || error "can't find '%{_sourcedir}'"
+specfile=${specdir}/codesearch.spec
+version_major=`echo "$version" | sed -e 's/\..*//'`
+version_minor=`echo "$version" | sed -e 's/.*\.//'`
+sed -e "s/@version_major@/${version_major}/g; \
+        s/@version_minor@/${version_minor}/g" \
+  ../codesearch.spec > ${specfile} \
+  || error "can't write '${specfile}'"
+rpmlint $specfile \
+  || error "rpmlint errors found."
+spectool -R --get-files ${specfile}
+for patch in ../patches/*.patch; do
+  cp -pv $patch ${sourcedir}/
+done
+rpmbuild -ba ${specdir}/codesearch.spec
