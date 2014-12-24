@@ -17,7 +17,7 @@ Group:		Applications/File
 License:	BSD
 URL:		http://code.google.com/p/codesearch
 Source0:	https://codesearch.googlecode.com/archive/%{rev}.tar.gz
-BuildRequires:	go
+BuildRequires:	gcc
 BuildRequires:	golang >= 1.2-7
 ExclusiveArch:	%{go_arches}
 
