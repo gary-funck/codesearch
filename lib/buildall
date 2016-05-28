@@ -22,7 +22,7 @@ build() {
 	cat README.template | sed "s/ARCH/$(arch $goarch)/; s/OPERSYS/$(os $goos)/" >codesearch-$version/README.txt
 	rm -f codesearch-$version-$goos-$goarch.zip
 	zip -z -r codesearch-$version-$goos-$goarch.zip codesearch-$version < codesearch-$version/README.txt
-	rm -rf codesearch-0.01
+	rm -rf codesearch-$version
 }
 
 for i in {linux,darwin,freebsd,windows}/{amd64,386}

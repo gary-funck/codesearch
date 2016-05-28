@@ -1,11 +1,11 @@
 diff --git a/HOW-TO-BUILD-RPM b/HOW-TO-BUILD-RPM
 new file mode 100644
-index 0000000..59b613b
+index 0000000..9d3456b
 --- /dev/null
 +++ b/HOW-TO-BUILD-RPM
 @@ -0,0 +1,43 @@
 +How to build RPM specfile for codesearch
-+(Ref: http://code.google.com/p/codesearch/)
++(Ref: git@github.com:google/codesearch.git)
 +
 +NOTE: The codesearch.spec file conforms to these
 +draft packaging guidelines for 'golang' based applications:
@@ -14,21 +14,21 @@ index 0000000..59b613b
 +
 +To create the codesearch rpm's, do the following:
 +
-+1. If necessary, change the hg commit id given by
++1. If necessary, change the git commit id given by
 +   this line in codesearch.spec:
 +
-+   %global rev     24df7a1a1bd03971c9dbc5408723b32527d62b94
++   %global rev     ffe6c2b91745d75d6c72eecb028f80e8d9469067
 +
 +   If you change that value, you will likely also
 +   want to change the 'snapshot' date stamp.
 +
-+   %global snapshot        20131031
++   %global snapshot	   20150617
 +
 +2. If necessary, change the version number given in lib/version.
 +   It has the form '#.##', where '#' is a decimal digit.
 +
 +3. cd into the 'lib' directory and run 'build-rpm'.
-+   
++
 +   cd lib; ./build-rpm
 +
 +The rpm spec file will be written to ~/rpmbuild/SPECS/codesearch.spec.
@@ -44,38 +44,39 @@ index 0000000..59b613b
 +
 +The rpm's will have names of the following form.
 +
-+  codesearch-0.02.20131031-02.fc20.src.rpm
-+  codesearch-0.02.20131031-02.fc20.x86_64.rpm
-+  golang-googlecode-codesearch-devel-0-02.hg24df7a1a1bd0.fc20.noarch.rpm
++  codesearch-0.20150617-02.fc23.src.rpm
++  codesearch-0.20150617-02.fc23.x86_64.rpm
++  golang-googlecode-codesearch-devel-0-02.gita45d81b686e8.fc23.noarch.rpm
 diff --git a/codesearch.spec b/codesearch.spec
 new file mode 100644
-index 0000000..f905492
+index 0000000..abbccf6
 --- /dev/null
 +++ b/codesearch.spec
-@@ -0,0 +1,116 @@
-+%global go_import_path	code.google.com/p/codesearch
+@@ -0,0 +1,122 @@
++%global go_import_path	github.com/google/codesearch
 +%global go_source	_build/src/%{go_import_path}
-+%global rev	24df7a1a1bd03971c9dbc5408723b32527d62b94
++%global rev		a45d81b686e85d01f2838439deaf72126ccd5a96
 +%global shortrev	%(r=%{rev}; echo ${r:0:12})
-+%global snapshot	20131031
++%global snapshot	20150617
 +%global package_major	@version_major@
 +%global package_minor	@version_minor@
 +%global package_version	%{package_major}.%{package_minor}
++%global package_url	https://%{go_import_path}
 +# We are using gccgo: stripped binaries are not presently supported.
 +%global __strip	/bin/true
 +# For now, the debuginfo macro fails due to no build ID note on golang
 +# binaries, so disable the debug package.
 +%global debug_package	%{nil}
 +
-+Name:	codesearch
++Name:		codesearch
 +Version:	%{package_major}.%{snapshot}
 +Release:	%{package_minor}%{?dist}
 +Summary:	The Google codesearch tool and its libraries.
 +Group:		Applications/File
 +License:	BSD
-+URL:		http://code.google.com/p/codesearch
-+Source0:	https://codesearch.googlecode.com/archive/%{rev}.tar.gz
-+Patch0:	codesearch-rpm-spec.patch
++URL:		%{package_url}
++Source0:	%{package_url}/archive/%{rev}.tar.gz
++Patch0:		codesearch-rpm-spec.patch
 +BuildRequires:	gcc
 +BuildRequires:	golang >= 1.2-7
 +ExclusiveArch:	%{go_arches}
@@ -85,9 +86,9 @@ index 0000000..f905492
 +
 +%package	-n golang-googlecode-codesearch-devel
 +Version:	%{package_major}
-+Release:	%{package_minor}.hg%{shortrev}%{?dist}
++Release:	%{package_minor}.git%{shortrev}%{?dist}
 +Summary:	Go libraries which support the Google codesearch tool
-+Group:	System Environment/Libraries
++Group:		System Environment/Libraries
 +Provides:	golang(%{go_import_path}) = %{version}-%{release}
 +Provides:	golang(%{go_import_path}/index) = %{version}-%{release}
 +Provides:	golang(%{go_import_path}/regexp) = %{version}-%{release}
@@ -106,7 +107,7 @@ index 0000000..f905492
 +and a regular expression matcher that employs the trigraph index.
 +
 +%prep
-+%setup -q -n codesearch-%{shortrev}
++%setup -q -n codesearch-%{rev}
 +
 +%patch0 -p1
 +
@@ -150,6 +151,11 @@ index 0000000..f905492
 +%{gopath}/src/%{go_import_path}/sparse/*.go
 +
 +%changelog
++* Sat May 28 2016 Gary Funck <gary@intrepid.com>
++- Migrate from code.google.com to github.com/google.
++- Migrate from hg to git.
++- Update to latest commit dated 2015-06-17.
++
 +* Wed Dec 24 2014 Gary Funck <gary@intrepid.com>
 +- Add package building infrastructure.
 +- Bump the package version.

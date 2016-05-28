@@ -1,5 +1,5 @@
 How to build RPM specfile for codesearch
-(Ref: http://code.google.com/p/codesearch/)
+(Ref: git@github.com:google/codesearch.git)
 
 NOTE: The codesearch.spec file conforms to these
 draft packaging guidelines for 'golang' based applications:
@@ -8,21 +8,21 @@ draft packaging guidelines for 'golang' based applications:
 
 To create the codesearch rpm's, do the following:
 
-1. If necessary, change the hg commit id given by
+1. If necessary, change the git commit id given by
    this line in codesearch.spec:
 
-   %global rev     24df7a1a1bd03971c9dbc5408723b32527d62b94
+   %global rev     ffe6c2b91745d75d6c72eecb028f80e8d9469067
 
    If you change that value, you will likely also
    want to change the 'snapshot' date stamp.
 
-   %global snapshot        20131031
+   %global snapshot	   20150617
 
 2. If necessary, change the version number given in lib/version.
    It has the form '#.##', where '#' is a decimal digit.
 
 3. cd into the 'lib' directory and run 'build-rpm'.
-   
+
    cd lib; ./build-rpm
 
 The rpm spec file will be written to ~/rpmbuild/SPECS/codesearch.spec.
@@ -38,6 +38,6 @@ can be found under ~/rpmbuild/RPMS/noarch
 
 The rpm's will have names of the following form.
 
-  codesearch-0.02.20131031-02.fc20.src.rpm
-  codesearch-0.02.20131031-02.fc20.x86_64.rpm
-  golang-googlecode-codesearch-devel-0-02.hg24df7a1a1bd0.fc20.noarch.rpm
+  codesearch-0.20150617-02.fc23.src.rpm
+  codesearch-0.20150617-02.fc23.x86_64.rpm
+  golang-googlecode-codesearch-devel-0-02.gita45d81b686e8.fc23.noarch.rpm
